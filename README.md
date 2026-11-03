@@ -81,6 +81,12 @@ TitanBot offers a complete suite of tools for Discord server management and comm
 - **Welcome Messages** - Greet new members
 - **Auto Roles** - Assign roles on join
 - **Custom Embeds** - Personalized messages
+
+### Washington State RP
+- **Staff Punishment Logs** - Warnings, bans, kicks, timeouts, and warning changes are recorded with the staff member, reason, and timestamp
+- **Automatic Roles** - Assign the configured member role when someone joins
+- **Support Tickets** - Private support channels with staff access controls
+- **Patrol Sessions** - A configurable Washington RP session panel with schedule, live/offline state, HTTPS game link, banner, and opt-in session role
   
 ### Music
 - **24/7 Mode** - Play music 24/7
@@ -90,6 +96,17 @@ TitanBot offers a complete suite of tools for Discord server management and comm
 </td>
 </tr>
 </table>
+
+## Washington State RP server features
+
+The moderation, welcome/autorole, and ticket systems are already built in. Configure them per server with the bot's slash commands; guild IDs, channels, roles, game links, and schedules are intentionally not hard-coded.
+
+- Use `/warn`, `/warnings`, `/ban`, `/kick`, `/timeout`, and `/cases` for staff actions and case history. Staff warning removal/clearing is permission-checked and recorded in the moderation audit log.
+- Use `/autorole add`, `/autorole remove`, and `/autorole list` to configure the member join role. The existing verification system must be disabled before enabling autorole.
+- Use `/ticket setup` to publish a ticket panel; `/ticket dashboard` manages its configuration. Ticket operations are limited to the ticket creator where appropriate, staff with the configured ticket role, or members with **Manage Channels**.
+- A server manager with **Manage Server** runs `/session setup` with the panel channel, session role, schedule (include the timezone), HTTPS in-game join link, and optional HTTPS banner URL. Then use `/session start`, `/session end`, or `/session status`. Members can opt in or out of the session role using the panel button.
+
+Session settings are stored in the bot's per-guild configuration in PostgreSQL (or the configured database fallback); no real server IDs or links are supplied by the bot. Grant **Manage Roles** to the bot and place its highest role above the configured session role. Keep the bot's moderator role hierarchy and staff permissions configured in Discord.
 
 <a name="quick-setup"></a>
 ## Quick Setup (Recommended for non-coders)

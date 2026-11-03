@@ -18,7 +18,9 @@ export default {
                     { name: 'Bans', value: 'Member Banned' },
                     { name: 'Kicks', value: 'Member Kicked' },
                     { name: 'Timeouts', value: 'Member Timed Out' },
-                    { name: 'Warnings', value: 'User Warned' }
+                    { name: 'Warnings', value: 'User Warned' },
+                    { name: 'Warning Removed', value: 'Warning Removed' },
+                    { name: 'Warnings Cleared', value: 'Warnings Cleared' }
                 )
         )
         .addUserOption(option =>

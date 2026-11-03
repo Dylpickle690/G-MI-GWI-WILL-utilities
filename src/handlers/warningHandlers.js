@@ -1,14 +1,29 @@
-import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags } from 'discord.js';
+import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlags, PermissionFlagsBits } from 'discord.js';
 import { successEmbed } from '../utils/embeds.js';
 import { WarningService } from '../services/moderation/warningService.js';
+import { logModerationAction } from '../utils/moderation.js';
 import { InteractionHelper } from '../utils/interactionHelper.js';
 import { logger } from '../utils/logger.js';
 
 import { replyUserError, ErrorTypes } from '../utils/errorHandler.js';
+
+async function requireModerationPermission(interaction) {
+  if (!interaction.inGuild() || !interaction.memberPermissions?.has(PermissionFlagsBits.ModerateMembers)) {
+    await replyUserError(interaction, {
+      type: ErrorTypes.PERMISSION,
+      message: 'You need **Moderate Members** to change warnings.',
+    });
+    return false;
+  }
+
+  return true;
+}
+
 const warningDeleteSpecificHandler = {
   name: 'warning_delete_specific',
   async execute(interaction, client) {
     try {
+      if (!(await requireModerationPermission(interaction))) return;
       const [, targetUserId, originalModeratorId] = interaction.customId.split(':');
       
       if (interaction.user.id !== originalModeratorId) {
@@ -42,6 +57,7 @@ const warningClearAllHandler = {
   name: 'warning_clear_all',
   async execute(interaction, client) {
     try {
+      if (!(await requireModerationPermission(interaction))) return;
       const [, targetUserId, originalModeratorId] = interaction.customId.split(':');
       
       if (interaction.user.id !== originalModeratorId) {
@@ -77,6 +93,7 @@ const warningClearAllHandler = {
 
 async function warningDeleteModalHandler(interaction, client) {
   try {
+    if (!(await requireModerationPermission(interaction))) return;
     const [, targetUserId, originalModeratorId] = interaction.customId.split(':');
     
     if (interaction.user.id !== originalModeratorId) {
@@ -105,6 +122,21 @@ async function warningDeleteModalHandler(interaction, client) {
 
     const targetUser = await client.users.fetch(targetUserId).catch(() => null);
     const targetName = targetUser ? targetUser.username : 'the user';
+    await logModerationAction({
+      client,
+      guild: interaction.guild,
+      event: {
+        action: 'Warning Removed',
+        target: `${targetName} (${targetUserId})`,
+        executor: `${interaction.user.tag} (${interaction.user.id})`,
+        reason: `Warning removed: ${warningToDelete.reason}`,
+        metadata: {
+          userId: targetUserId,
+          moderatorId: interaction.user.id,
+          warningId: warningToDelete.id,
+        },
+      },
+    });
 
     logger.info(`[MODERATION] Warning deleted for ${targetUserId} in ${guildId} by ${interaction.user.id}`, {
       warningId: warningToDelete.id,
@@ -123,6 +155,7 @@ async function warningDeleteModalHandler(interaction, client) {
 
 async function warningClearConfirmModalHandler(interaction, client) {
   try {
+    if (!(await requireModerationPermission(interaction))) return;
     const [, targetUserId, originalModeratorId] = interaction.customId.split(':');
     
     if (interaction.user.id !== originalModeratorId) {
@@ -142,6 +175,23 @@ async function warningClearConfirmModalHandler(interaction, client) {
 
     const targetUser = await client.users.fetch(targetUserId).catch(() => null);
     const targetName = targetUser ? targetUser.username : 'the user';
+    if (count > 0) {
+      await logModerationAction({
+        client,
+        guild: interaction.guild,
+        event: {
+          action: 'Warnings Cleared',
+          target: `${targetName} (${targetUserId})`,
+          executor: `${interaction.user.tag} (${interaction.user.id})`,
+          reason: `Cleared all ${count} recorded warning(s).`,
+          metadata: {
+            userId: targetUserId,
+            moderatorId: interaction.user.id,
+            warningCount: count,
+          },
+        },
+      });
+    }
 
     logger.info(`[MODERATION] All warnings cleared for ${targetUserId} in ${guildId} by ${interaction.user.id}`);
 
